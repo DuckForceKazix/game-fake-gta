@@ -99,3 +99,19 @@ window.addEventListener("resize", () => {
 
 </body>
 </html>
+// Chão visível
+const groundGeo = new THREE.PlaneGeometry(200,200);
+const groundMat = new THREE.MeshPhongMaterial({color:0x228B22}); // verde
+const ground = new THREE.Mesh(groundGeo, groundMat);
+ground.rotation.x = -Math.PI/2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// Luz
+const light = new THREE.DirectionalLight(0xffffff, 1);
+light.position.set(10,20,10);
+scene.add(light);
+
+// Câmera atrás do player (um pouco mais alta)
+camera.position.set(0,5,10);
+camera.lookAt(moto.position);
