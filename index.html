@@ -4,52 +4,63 @@
 <meta charset="UTF-8">
 <title>Mini GTA RP 3D</title>
 <style>
-body { margin:0; overflow:hidden; background:#87ceeb; }
-canvas { display:block; }
+  body { margin:0; overflow:hidden; background:#87ceeb; }
+  canvas { display:block; }
 </style>
 </head>
 <body>
 <canvas id="game"></canvas>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.162.0/build/three.min.js"></script>
-
 <script>
-// Canvas e Three.js
+// Cena, câmera e render
 const canvas = document.getElementById("game");
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87ceeb); // céu
+scene.background = new THREE.Color(0x87ceeb);
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer({canvas});
 renderer.setSize(window.innerWidth, window.innerHeight);
 
 // Luz
-const light = new THREE.DirectionalLight(0xffffff, 1);
-light.position.set(10,20,10);
+const light = new THREE.DirectionalLight(0xffffff,1);
+light.position.set(20,50,20);
 scene.add(light);
 
-// Chão
+// Chão (rua)
 const groundGeo = new THREE.PlaneGeometry(500,500);
-const groundMat = new THREE.MeshPhongMaterial({color:0x2c2c2c});
+const groundMat = new THREE.MeshPhongMaterial({color:0x444444});
 const ground = new THREE.Mesh(groundGeo, groundMat);
 ground.rotation.x = -Math.PI/2;
-ground.receiveShadow = true;
 scene.add(ground);
 
-// CARRO PNG (base64)
+// Prédios
+const buildingGeo = new THREE.BoxGeometry(5,10,5);
+const buildingMat = new THREE.MeshPhongMaterial({color:0x888888});
+for(let i=-50;i<=50;i+=15){
+    for(let j=-50;j<=50;j+=15){
+        if(Math.random()<0.6){ // nem todos espaços têm prédio
+            const building = new THREE.Mesh(buildingGeo, buildingMat);
+            building.position.set(i,5,j); // altura metade do cubo
+            scene.add(building);
+        }
+    }
+}
+
+// Carro PNG (simples cubo com textura)
+const carGeo = new THREE.BoxGeometry(2,1,4);
 const carTexture = new THREE.TextureLoader().load(
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAA...'
 );
 const carMat = new THREE.MeshBasicMaterial({map: carTexture, transparent:true});
-const carGeo = new THREE.BoxGeometry(2,1,4);
 const car = new THREE.Mesh(carGeo, carMat);
 car.position.y = 0.5;
 scene.add(car);
 
 // Controles
 let keys = {};
-document.addEventListener("keydown", e=>keys[e.key.toLowerCase()]=true);
-document.addEventListener("keyup", e=>keys[e.key.toLowerCase()]=false);
+document.addEventListener("keydown", e => keys[e.key.toLowerCase()]=true);
+document.addEventListener("keyup", e => keys[e.key.toLowerCase()]=false);
 
 // Loop
 function animate(){
