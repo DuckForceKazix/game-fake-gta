@@ -1,13 +1,22 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
+  <meta charset="UTF-8">
   <title>Mini GTA JS</title>
   <style>
-    body { margin: 0; overflow: hidden; background: #222; }
-    canvas { display: block; }
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #222;
+      font-family: Arial, sans-serif;
+    }
+    canvas {
+      display: block;
+    }
   </style>
 </head>
 <body>
+
 <canvas id="game"></canvas>
 
 <script>
@@ -30,8 +39,8 @@ let player = {
 let car = {
   x: 400,
   y: 300,
-  width: 40,
-  height: 20,
+  width: 50,
+  height: 25,
   speed: 5
 };
 
@@ -43,9 +52,9 @@ document.addEventListener("keyup", e => keys[e.key] = false);
 
 // Entrar/sair do carro
 document.addEventListener("keydown", e => {
-  if (e.key === "e") {
+  if (e.key.toLowerCase() === "e") {
     let dist = Math.hypot(player.x - car.x, player.y - car.y);
-    if (dist < 50) {
+    if (dist < 60) {
       player.inCar = !player.inCar;
     }
   }
@@ -54,17 +63,14 @@ document.addEventListener("keydown", e => {
 // Atualização
 function update() {
   if (player.inCar) {
-    // Controle do carro
     if (keys["ArrowUp"]) car.y -= car.speed;
     if (keys["ArrowDown"]) car.y += car.speed;
     if (keys["ArrowLeft"]) car.x -= car.speed;
     if (keys["ArrowRight"]) car.x += car.speed;
 
-    // Player segue o carro
     player.x = car.x;
     player.y = car.y;
   } else {
-    // Controle do player
     if (keys["ArrowUp"]) player.y -= player.speed;
     if (keys["ArrowDown"]) player.y += player.speed;
     if (keys["ArrowLeft"]) player.x -= player.speed;
@@ -76,9 +82,14 @@ function update() {
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Fundo (cidade simples)
-  ctx.fillStyle = "#444";
+  // Fundo
+  ctx.fillStyle = "#3a3a3a";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Ruas simples
+  ctx.fillStyle = "#555";
+  ctx.fillRect(100, 0, 80, canvas.height);
+  ctx.fillRect(0, 200, canvas.width, 80);
 
   // Carro
   ctx.fillStyle = "red";
@@ -90,19 +101,26 @@ function draw() {
     ctx.fillRect(player.x, player.y, player.size, player.size);
   }
 
-  // Texto
+  // HUD
   ctx.fillStyle = "white";
   ctx.fillText("Setas: mover | E: entrar/sair do carro", 20, 30);
 }
 
-// Loop do jogo
-function gameLoop() {
+// Loop
+function loop() {
   update();
   draw();
-  requestAnimationFrame(gameLoop);
+  requestAnimationFrame(loop);
 }
 
-gameLoop();
+loop();
+
+// Ajustar tela
+window.addEventListener("resize", () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
 </script>
+
 </body>
 </html>
