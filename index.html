@@ -2,137 +2,124 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Jogo de Corrida</title>
+  <title>Mini GTA JS</title>
   <style>
     body {
       margin: 0;
       overflow: hidden;
       background: #222;
       font-family: Arial, sans-serif;
-      color: white;
-      text-align: center;
     }
-
     canvas {
-      background: #555;
       display: block;
-      margin: 0 auto;
-      border: 3px solid white;
-    }
-
-    #info {
-      position: absolute;
-      top: 10px;
-      width: 100%;
-      font-size: 20px;
     }
   </style>
 </head>
 <body>
 
-<div id="info">Use ← → para desviar | Pontos: <span id="score">0</span></div>
-<canvas id="gameCanvas" width="400" height="600"></canvas>
+<canvas id="game"></canvas>
 
 <script>
-const canvas = document.getElementById("gameCanvas");
+const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+// Player
 let player = {
-  x: 180,
-  y: 500,
-  width: 40,
-  height: 80,
-  color: "cyan",
+  x: 200,
+  y: 200,
+  size: 20,
+  speed: 3,
+  inCar: false
+};
+
+// Carro
+let car = {
+  x: 400,
+  y: 300,
+  width: 50,
+  height: 25,
   speed: 5
 };
 
-let obstacles = [];
-let score = 0;
-let gameOver = false;
+let keys = {};
 
-function createObstacle() {
-  let x = Math.random() * (canvas.width - 40);
-  obstacles.push({
-    x: x,
-    y: -80,
-    width: 40,
-    height: 80,
-    color: "red",
-    speed: 4 + Math.random() * 2
-  });
-}
+// Controles
+document.addEventListener("keydown", e => keys[e.key] = true);
+document.addEventListener("keyup", e => keys[e.key] = false);
 
-function drawPlayer() {
-  ctx.fillStyle = player.color;
-  ctx.fillRect(player.x, player.y, player.width, player.height);
-}
-
-function drawObstacles() {
-  ctx.fillStyle = "red";
-  obstacles.forEach(obs => {
-    ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
-  });
-}
-
-function updateObstacles() {
-  obstacles.forEach(obs => {
-    obs.y += obs.speed;
-
-    // colisão
-    if (
-      player.x < obs.x + obs.width &&
-      player.x + player.width > obs.x &&
-      player.y < obs.y + obs.height &&
-      player.y + player.height > obs.y
-    ) {
-      gameOver = true;
+// Entrar/sair do carro
+document.addEventListener("keydown", e => {
+  if (e.key.toLowerCase() === "e") {
+    let dist = Math.hypot(player.x - car.x, player.y - car.y);
+    if (dist < 60) {
+      player.inCar = !player.inCar;
     }
-
-    // pontuação
-    if (obs.y > canvas.height) {
-      score++;
-      document.getElementById("score").innerText = score;
-    }
-  });
-
-  obstacles = obstacles.filter(obs => obs.y < canvas.height);
-}
-
-function clearCanvas() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-}
-
-function gameLoop() {
-  if (gameOver) {
-    ctx.fillStyle = "white";
-    ctx.font = "30px Arial";
-    ctx.fillText("Game Over", 120, 300);
-    return;
-  }
-
-  clearCanvas();
-  drawPlayer();
-  drawObstacles();
-  updateObstacles();
-
-  requestAnimationFrame(gameLoop);
-}
-
-// controles
-document.addEventListener("keydown", (e) => {
-  if (e.key === "ArrowLeft" && player.x > 0) {
-    player.x -= player.speed * 10;
-  }
-  if (e.key === "ArrowRight" && player.x < canvas.width - player.width) {
-    player.x += player.speed * 10;
   }
 });
 
-// spawn de obstáculos
-setInterval(createObstacle, 1000);
+// Atualização
+function update() {
+  if (player.inCar) {
+    if (keys["ArrowUp"]) car.y -= car.speed;
+    if (keys["ArrowDown"]) car.y += car.speed;
+    if (keys["ArrowLeft"]) car.x -= car.speed;
+    if (keys["ArrowRight"]) car.x += car.speed;
 
-// iniciar jogo
-gameLoop();
+    player.x = car.x;
+    player.y = car.y;
+  } else {
+    if (keys["ArrowUp"]) player.y -= player.speed;
+    if (keys["ArrowDown"]) player.y += player.speed;
+    if (keys["ArrowLeft"]) player.x -= player.speed;
+    if (keys["ArrowRight"]) player.x += player.speed;
+  }
+}
+
+// Desenho
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Fundo
+  ctx.fillStyle = "#3a3a3a";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Ruas simples
+  ctx.fillStyle = "#555";
+  ctx.fillRect(100, 0, 80, canvas.height);
+  ctx.fillRect(0, 200, canvas.width, 80);
+
+  // Carro
+  ctx.fillStyle = "red";
+  ctx.fillRect(car.x, car.y, car.width, car.height);
+
+  // Player
+  if (!player.inCar) {
+    ctx.fillStyle = "white";
+    ctx.fillRect(player.x, player.y, player.size, player.size);
+  }
+
+  // HUD
+  ctx.fillStyle = "white";
+  ctx.fillText("Setas: mover | E: entrar/sair do carro", 20, 30);
+}
+
+// Loop
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+loop();
+
+// Ajustar tela
+window.addEventListener("resize", () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
 </script>
 
 </body>
