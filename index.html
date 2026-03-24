@@ -2,96 +2,166 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Casa de Apostas Tigrinho Fake</title>
+<title>Roleta Tigrinho Fake</title>
 <style>
-  body { 
-    font-family: Arial, sans-serif; 
-    display:flex; 
-    justify-content:center; 
-    align-items:center; 
-    height:100vh; 
-    background: linear-gradient(to right,#ffcc00,#ff6600); 
+  body {
     margin:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    background: linear-gradient(to right,#ffcc00,#ff6600);
+    font-family: Arial, sans-serif;
   }
-  #tigrinho {
-    background:#fff; 
-    padding:20px; 
-    border-radius:15px; 
-    width:320px; 
-    text-align:center; 
+  #roulette {
+    background:#fff;
+    padding:20px;
+    border-radius:15px;
+    width:360px;
+    text-align:center;
     box-shadow:0 0 20px rgba(0,0,0,0.5);
   }
-  #tigrinho h2 { color:#ff6600; margin-bottom:10px; }
-  #tigrinho p { font-size:18px; margin:5px 0; }
+  #roulette h2 {
+    color:#ff6600;
+    margin-bottom:10px;
+  }
+  #roulette p { font-size:18px; margin:5px 0; }
   input[type=number] { width:80px; padding:5px; margin:10px 0; text-align:center; }
-  button { 
-    padding:10px 15px; 
-    margin:5px; 
-    border:none; 
-    border-radius:8px; 
-    cursor:pointer; 
-    font-weight:bold; 
-    background:#ffcc00; 
-    color:#333; 
-    transition: 0.2s;
+  button {
+    padding:10px 15px;
+    margin:5px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:bold;
+    background:#ffcc00;
+    color:#333;
+    transition:0.2s;
   }
   button:hover { background:#ff9900; color:white; }
-  #result { margin-top:10px; font-weight:bold; font-size:16px; color:#ff3300; min-height:20px;}
+  #wheel {
+    margin:20px auto;
+    width:200px;
+    height:200px;
+    border-radius:50%;
+    border:5px solid #333;
+    position:relative;
+    overflow:hidden;
+  }
+  .segment {
+    position:absolute;
+    width:50%;
+    height:50%;
+    background:#ffcc00;
+    top:50%;
+    left:50%;
+    transform-origin:0% 0%;
+    border:1px solid #333;
+  }
+  #pointer {
+    width:0;
+    height:0;
+    border-left:15px solid transparent;
+    border-right:15px solid transparent;
+    border-bottom:30px solid red;
+    position:absolute;
+    top:-30px;
+    left:calc(50% - 15px);
+  }
+  #result { margin-top:15px; font-weight:bold; font-size:16px; color:#ff3300; min-height:20px;}
 </style>
 </head>
 <body>
 
-<div id="tigrinho">
-  <h2>🎰 Casa de Apostas Tigrinho 🎰</h2>
+<div id="roulette">
+  <h2>🎰 Roleta Tigrinho 🎰</h2>
   <p>Saldo: $<span id="balance">1000</span></p>
   <input type="number" id="betAmount" placeholder="Valor da aposta">
   <div>
-    <button onclick="playBet()">Apostar!</button>
+    <button onclick="spin()">Girar</button>
     <button onclick="resetBalance()">Resetar Saldo</button>
   </div>
+  <div id="wheel"></div>
+  <div id="pointer"></div>
   <p id="result"></p>
 </div>
 
 <script>
 let balance = 1000;
+const wheel = document.getElementById("wheel");
+const resultText = document.getElementById("result");
+const segments = 8; // número de partes na roleta
 
-function playBet(){
+// Criar segmentos coloridos
+for(let i=0;i<segments;i++){
+  const seg = document.createElement("div");
+  seg.classList.add("segment");
+  seg.style.background = i%2===0 ? "#ffcc00" : "#ff9900";
+  seg.style.transform = `rotate(${i*360/segments}deg) skewY(-30deg)`;
+  wheel.appendChild(seg);
+}
+
+let spinning = false;
+
+function spin(){
+  if(spinning) return;
   const betInput = document.getElementById("betAmount");
-  const amount = parseInt(betInput.value);
+  const bet = parseInt(betInput.value);
+  if(!bet || bet <=0){ alert("Digite um valor válido!"); return; }
+  if(bet>balance){ alert("Saldo insuficiente!"); return; }
 
-  if(!amount || amount <= 0){
-    alert("Digite um valor válido!");
-    return;
-  }
-  if(amount > balance){
-    alert("Saldo insuficiente!");
-    return;
-  }
+  spinning = true;
+  resultText.innerText = "Girando...";
+  
+  // Número aleatório de voltas + posição final
+  const finalDeg = Math.random()*360 + 360*5; // gira 5 voltas
+  let current = 0;
+  const duration = 4000; // 4 segundos
 
-  // Simula resultado estilo Tigrinho com "sorteio"
-  const random = Math.random();
-  let resultText = "";
-  if(random < 0.45){
-    balance -= amount;
-    resultText = `😢 Você perdeu $${amount}!`;
-  } else if(random < 0.9){
-    balance += amount;
-    resultText = `🎉 Você ganhou $${amount}!`;
-  } else {
-    const bonus = amount * 2;
-    balance += bonus;
-    resultText = `💎 Jackpot! Você ganhou $${bonus}!`;
+  const start = performance.now();
+  function animate(time){
+    let elapsed = time - start;
+    if(elapsed>duration) elapsed = duration;
+    const deg = easeOut(elapsed,0,finalDeg,duration);
+    wheel.style.transform = `rotate(${deg}deg)`;
+    if(elapsed<duration){
+      requestAnimationFrame(animate);
+    } else {
+      spinning=false;
+      const segmentSize = 360/segments;
+      const landed = Math.floor(((deg%360)/segmentSize));
+      // 50% chance de ganhar simples
+      let winAmount = 0;
+      if(landed%2===0){
+        winAmount = bet;
+        balance += winAmount;
+        resultText.innerText = `🎉 Você ganhou $${winAmount}!`;
+      } else if(landed===7){ // jackpot
+        winAmount = bet*3;
+        balance += winAmount;
+        resultText.innerText = `💎 Jackpot! Você ganhou $${winAmount}!`;
+      } else {
+        balance -= bet;
+        resultText.innerText = `😢 Você perdeu $${bet}!`;
+      }
+      document.getElementById("balance").innerText = balance;
+      betInput.value='';
+    }
   }
+  requestAnimationFrame(animate);
+}
 
-  document.getElementById("balance").innerText = balance;
-  document.getElementById("result").innerText = resultText;
-  betInput.value = '';
+// Efeito de desaceleração
+function easeOut(t,b,c,d){
+  t/=d;
+  t--;
+  return c*(t*t*t +1) + b;
 }
 
 function resetBalance(){
   balance = 1000;
   document.getElementById("balance").innerText = balance;
-  document.getElementById("result").innerText = '';
+  resultText.innerText='';
 }
 </script>
 
