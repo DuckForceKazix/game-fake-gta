@@ -2,110 +2,90 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Mini GTA RP 3D com Banco Falso</title>
+<title>Casa de Apostas Falsa</title>
 <style>
-  body { margin:0; overflow:hidden; background:#87ceeb; }
-  canvas { display:block; }
-  #bankUI {
-    position: fixed;
-    top: 50%; left: 50%;
-    transform: translate(-50%,-50%);
-    background: rgba(0,0,0,0.8);
-    color: white;
-    padding: 20px;
-    border-radius: 10px;
-    display: none;
-    font-family: Arial, sans-serif;
+  body { 
+    font-family: Arial, sans-serif; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    height: 100vh; 
+    background: #222; 
+    color: white; 
   }
-  #bankUI button { margin-top: 10px; padding: 5px 10px; }
+  #betContainer {
+    background: #333; 
+    padding: 20px; 
+    border-radius: 10px;
+    text-align: center;
+    width: 300px;
+  }
+  button {
+    margin: 5px;
+    padding: 10px 15px;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
+    background: gold;
+    font-weight: bold;
+  }
+  input[type=number] {
+    width: 80px;
+    padding: 5px;
+    margin-top: 10px;
+    text-align: center;
+  }
 </style>
 </head>
 <body>
 
-<canvas id="game"></canvas>
-<div id="bankUI">
-  <h2>Banco Falso</h2>
-  <p>Saldo: $1000</p>
-  <button onclick="closeBank()">Fechar</button>
+<div id="betContainer">
+  <h2>Casa de Apostas Falsa</h2>
+  <p>Saldo: $<span id="balance">1000</span></p>
+  <input type="number" id="betAmount" placeholder="Valor da aposta">
+  <div>
+    <button onclick="bet('win')">Apostar e Tentar Sorte</button>
+    <button onclick="resetBet()">Resetar Saldo</button>
+  </div>
+  <p id="result"></p>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/three@0.162.0/build/three.min.js"></script>
 <script>
-// Cena e render
-const canvas = document.getElementById("game");
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87ceeb);
+let balance = 1000;
 
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-const renderer = new THREE.WebGLRenderer({canvas});
-renderer.setSize(window.innerWidth, window.innerHeight);
+function bet() {
+  const amountInput = document.getElementById("betAmount");
+  const amount = parseInt(amountInput.value);
 
-// Luz
-const light = new THREE.DirectionalLight(0xffffff,1);
-light.position.set(20,50,20);
-scene.add(light);
+  if(isNaN(amount) || amount <= 0) {
+    alert("Digite um valor válido para apostar!");
+    return;
+  }
+  if(amount > balance) {
+    alert("Saldo insuficiente!");
+    return;
+  }
 
-// Chão
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(500,500), new THREE.MeshPhongMaterial({color:0x444444}));
-ground.rotation.x = -Math.PI/2;
-scene.add(ground);
+  // Simula resultado aleatório
+  const win = Math.random() < 0.5; // 50% chance de ganhar
+  if(win){
+    balance += amount;
+    document.getElementById("result").innerText = "Você ganhou $" + amount + "!";
+  } else {
+    balance -= amount;
+    document.getElementById("result").innerText = "Você perdeu $" + amount + "!";
+  }
 
-// Banco falso (amarelo)
-const bankGeo = new THREE.BoxGeometry(15,10,12);
-const bankMat = new THREE.MeshPhongMaterial({color:0xffff00});
-const bank = new THREE.Mesh(bankGeo, bankMat);
-bank.position.set(30,5,-40);
-scene.add(bank);
-
-// Carro
-const car = new THREE.Mesh(new THREE.BoxGeometry(2,1,4), new THREE.MeshPhongMaterial({color:0xff0000}));
-car.position.y = 0.5;
-scene.add(car);
-
-// Controles
-let keys = {};
-document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
-document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
-
-// Banco falso UI
-const bankUI = document.getElementById("bankUI");
-function closeBank() { bankUI.style.display = "none"; }
-
-// Loop
-function animate(){
-    requestAnimationFrame(animate);
-
-    // Movimento
-    let speed = keys["shift"] ? 0.3 : 0.15;
-    if(keys["w"]) car.position.z -= speed;
-    if(keys["s"]) car.position.z += speed;
-    if(keys["a"]) car.position.x -= speed;
-    if(keys["d"]) car.position.x -= speed;
-
-    // Câmera atrás
-    camera.position.x = car.position.x;
-    camera.position.y = car.position.y + 5;
-    camera.position.z = car.position.z + 10;
-    camera.lookAt(car.position);
-
-    // Checar proximidade com banco
-    const dx = car.position.x - bank.position.x;
-    const dz = car.position.z - bank.position.z;
-    const dist = Math.sqrt(dx*dx + dz*dz);
-
-    // Pressione E para abrir banco falso
-    if(dist < 10 && keys["e"]) bankUI.style.display = "block";
-
-    renderer.render(scene,camera);
+  document.getElementById("balance").innerText = balance;
+  amountInput.value = '';
 }
-animate();
 
-// Resize
-window.addEventListener("resize", ()=>{
-    camera.aspect = window.innerWidth/window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-});
+function resetBet(){
+  balance = 1000;
+  document.getElementById("balance").innerText = balance;
+  document.getElementById("result").innerText = '';
+}
 </script>
+
 </body>
 </html>
