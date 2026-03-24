@@ -1,23 +1,28 @@
 <!DOCTYPE html>
+
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title>Mini GTA JS</title>
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      background: #222;
-      font-family: Arial, sans-serif;
-    }
-    canvas {
-      display: block;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Mini GTA FULL</title>
+<style>
+body { margin:0; overflow:hidden; background:#111; font-family:Arial; }
+canvas { display:block; }
+
+#btnCar {
+position: fixed;
+bottom: 20px;
+right: 20px;
+padding: 15px 25px;
+background: gold;
+border: none;
+border-radius: 10px;
+cursor: pointer;
+} </style>
+
 </head>
 <body>
 
-<canvas id="game"></canvas>
+<canvas id="game"></canvas> <button id="btnCar">Entrar no carro</button>
 
 <script>
 const canvas = document.getElementById("game");
@@ -26,97 +31,189 @@ const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// Player
-let player = {
-  x: 200,
-  y: 200,
-  size: 20,
-  speed: 3,
-  inCar: false
-};
-
-// Carro
-let car = {
-  x: 400,
-  y: 300,
-  width: 50,
-  height: 25,
-  speed: 5
-};
-
 let keys = {};
+let bullets = [];
 
-// Controles
-document.addEventListener("keydown", e => keys[e.key] = true);
-document.addEventListener("keyup", e => keys[e.key] = false);
+// PLAYER
+let player = {
+  x: 500,
+  y: 500,
+  size: 20,
+  speed: 2,
+  run: 4,
+  inCar: false,
+  life: 100
+};
 
-// Entrar/sair do carro
+// CARRO
+let car = {
+  x: 600,
+  y: 500,
+  w: 60,
+  h: 30,
+  speed: 6
+};
+
+// NPCs
+let npcs = [];
+for(let i=0;i<8;i++){
+  npcs.push({
+    x: Math.random()*2000,
+    y: Math.random()*2000,
+    dir: Math.random()*6
+  });
+}
+
+// POLÍCIA
+let police = { x: 800, y: 800 };
+
+// CONTROLES
 document.addEventListener("keydown", e => {
-  if (e.key.toLowerCase() === "e") {
-    let dist = Math.hypot(player.x - car.x, player.y - car.y);
-    if (dist < 60) {
-      player.inCar = !player.inCar;
-    }
-  }
+  keys[e.key.toLowerCase()] = true;
+  if(e.key.toLowerCase() === "e") toggleCar();
+});
+document.addEventListener("keyup", e => {
+  keys[e.key.toLowerCase()] = false;
 });
 
-// Atualização
-function update() {
-  if (player.inCar) {
-    if (keys["ArrowUp"]) car.y -= car.speed;
-    if (keys["ArrowDown"]) car.y += car.speed;
-    if (keys["ArrowLeft"]) car.x -= car.speed;
-    if (keys["ArrowRight"]) car.x += car.speed;
+// BOTÃO
+document.getElementById("btnCar").onclick = toggleCar;
+
+// TIRO
+canvas.addEventListener("click", () => {
+  bullets.push({
+    x: player.x,
+    y: player.y,
+    dx: (Math.random()-0.5)*10,
+    dy: (Math.random()-0.5)*10
+  });
+});
+
+function toggleCar(){
+  let dist = Math.hypot(player.x-car.x, player.y-car.y);
+  if(dist < 80 || player.inCar){
+    player.inCar = !player.inCar;
+    document.getElementById("btnCar").innerText =
+      player.inCar ? "Sair do carro" : "Entrar no carro";
+  }
+}
+
+// UPDATE
+function update(){
+  let speed = keys["shift"] ? player.run : player.speed;
+
+  if(player.inCar){
+    if(keys["w"]||keys["arrowup"]) car.y -= car.speed;
+    if(keys["s"]||keys["arrowdown"]) car.y += car.speed;
+    if(keys["a"]||keys["arrowleft"]) car.x -= car.speed;
+    if(keys["d"]||keys["arrowright"]) car.x += car.speed;
 
     player.x = car.x;
     player.y = car.y;
+
   } else {
-    if (keys["ArrowUp"]) player.y -= player.speed;
-    if (keys["ArrowDown"]) player.y += player.speed;
-    if (keys["ArrowLeft"]) player.x -= player.speed;
-    if (keys["ArrowRight"]) player.x += player.speed;
+    if(keys["w"]||keys["arrowup"]) player.y -= speed;
+    if(keys["s"]||keys["arrowdown"]) player.y += speed;
+    if(keys["a"]||keys["arrowleft"]) player.x -= speed;
+    if(keys["d"]||keys["arrowright"]) player.x += speed;
   }
+
+  // NPCs
+  npcs.forEach(n=>{
+    n.x += Math.sin(n.dir);
+    n.y += Math.cos(n.dir);
+    if(Math.random()<0.02) n.dir = Math.random()*6;
+  });
+
+  // POLÍCIA TE SEGUE
+  let dx = player.x - police.x;
+  let dy = player.y - police.y;
+  police.x += dx * 0.01;
+  police.y += dy * 0.01;
+
+  // DANO
+  if(Math.hypot(dx,dy)<30){
+    player.life -= 0.1;
+  }
+
+  // BALAS
+  bullets.forEach(b=>{
+    b.x += b.dx;
+    b.y += b.dy;
+  });
 }
 
-// Desenho
-function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+// CAMERA
+function camera(){
+  return {
+    x: player.x - canvas.width/2,
+    y: player.y - canvas.height/2
+  };
+}
 
-  // Fundo
-  ctx.fillStyle = "#3a3a3a";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+// DRAW
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  // Ruas simples
-  ctx.fillStyle = "#555";
-  ctx.fillRect(100, 0, 80, canvas.height);
-  ctx.fillRect(0, 200, canvas.width, 80);
+  let cam = camera();
+  ctx.save();
+  ctx.translate(-cam.x, -cam.y);
 
-  // Carro
-  ctx.fillStyle = "red";
-  ctx.fillRect(car.x, car.y, car.width, car.height);
+  // MAPA
+  ctx.fillStyle="#2c2c2c";
+  ctx.fillRect(0,0,2000,2000);
 
-  // Player
-  if (!player.inCar) {
-    ctx.fillStyle = "white";
+  // RUAS
+  ctx.fillStyle="#555";
+  for(let i=0;i<2000;i+=200){
+    ctx.fillRect(i,0,50,2000);
+    ctx.fillRect(0,i,2000,50);
+  }
+
+  // NPCs
+  ctx.fillStyle="yellow";
+  npcs.forEach(n=>{
+    ctx.fillRect(n.x,n.y,15,15);
+  });
+
+  // POLÍCIA
+  ctx.fillStyle="blue";
+  ctx.fillRect(police.x, police.y, 20,20);
+
+  // CARRO
+  ctx.fillStyle="red";
+  ctx.fillRect(car.x, car.y, car.w, car.h);
+
+  // PLAYER
+  if(!player.inCar){
+    ctx.fillStyle="white";
     ctx.fillRect(player.x, player.y, player.size, player.size);
   }
 
+  // BALAS
+  ctx.fillStyle="orange";
+  bullets.forEach(b=>{
+    ctx.fillRect(b.x,b.y,5,5);
+  });
+
+  ctx.restore();
+
   // HUD
-  ctx.fillStyle = "white";
-  ctx.fillText("Setas: mover | E: entrar/sair do carro", 20, 30);
+  ctx.fillStyle="white";
+  ctx.fillText("Vida: "+Math.floor(player.life), 20,30);
+  ctx.fillText("WASD | SHIFT correr | Mouse atira | E carro", 20,50);
 }
 
-// Loop
-function loop() {
+// LOOP
+function loop(){
   update();
   draw();
   requestAnimationFrame(loop);
 }
-
 loop();
 
-// Ajustar tela
-window.addEventListener("resize", () => {
+// RESIZE
+window.addEventListener("resize", ()=>{
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
 });
