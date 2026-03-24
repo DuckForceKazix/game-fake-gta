@@ -2,116 +2,81 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Motocross 3D</title>
+<title>Mini GTA RP 3D</title>
 <style>
-  body { margin:0; overflow:hidden; background:#111; }
-  canvas { display:block; }
+body { margin:0; overflow:hidden; background:#87ceeb; }
+canvas { display:block; }
 </style>
 </head>
 <body>
-
 <canvas id="game"></canvas>
 
-<!-- Three.js -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.162.0/build/three.min.js"></script>
 
 <script>
+// Canvas e Three.js
 const canvas = document.getElementById("game");
-
-// Cena, câmera, renderizador
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87ceeb); // céu azul
+scene.background = new THREE.Color(0x87ceeb); // céu
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer({canvas});
 renderer.setSize(window.innerWidth, window.innerHeight);
-
-// Chão
-const groundGeo = new THREE.PlaneGeometry(200,200,20,20);
-const groundMat = new THREE.MeshBasicMaterial({color:0x228B22, wireframe:true});
-const ground = new THREE.Mesh(groundGeo, groundMat);
-ground.rotation.x = -Math.PI/2;
-scene.add(ground);
-
-// Rampas simples
-const rampGeo = new THREE.BoxGeometry(5,2,10);
-const rampMat = new THREE.MeshBasicMaterial({color:0x8B4513});
-const ramp = new THREE.Mesh(rampGeo, rampMat);
-ramp.position.set(0,1, -20);
-ramp.rotation.x = -Math.PI/12;
-scene.add(ramp);
-
-// Moto (player)
-const motoGeo = new THREE.BoxGeometry(1,1,2);
-const motoMat = new THREE.MeshBasicMaterial({color:0xff0000});
-const moto = new THREE.Mesh(motoGeo, motoMat);
-moto.position.y = 0.5;
-scene.add(moto);
-
-// Física básica
-let velocityY = 0;
-const gravity = 0.01;
-
-// Controles
-let keys = {};
-document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
-document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
-
-// Loop
-function animate() {
-  requestAnimationFrame(animate);
-
-  // Movimento horizontal
-  let speed = keys["shift"] ? 0.3 : 0.15;
-  if(keys["w"]) moto.position.z -= speed;
-  if(keys["s"]) moto.position.z += speed;
-  if(keys["a"]) moto.position.x -= speed;
-  if(keys["d"]) moto.position.x += speed;
-
-  // Pular rampas
-  if(keys[" "] && moto.position.y <= 0.51) velocityY = 0.2; // espaço pular
-
-  // Gravidade
-  moto.position.y += velocityY;
-  velocityY -= gravity;
-  if(moto.position.y < 0.5){
-    moto.position.y = 0.5;
-    velocityY = 0;
-  }
-
-  // Câmera atrás da moto
-  camera.position.x = moto.position.x;
-  camera.position.y = moto.position.y + 5;
-  camera.position.z = moto.position.z + 8;
-  camera.lookAt(moto.position);
-
-  renderer.render(scene, camera);
-}
-animate();
-
-// Resize
-window.addEventListener("resize", () => {
-  camera.aspect = window.innerWidth/window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-});
-</script>
-
-</body>
-</html>
-// Chão visível
-const groundGeo = new THREE.PlaneGeometry(200,200);
-const groundMat = new THREE.MeshPhongMaterial({color:0x228B22}); // verde
-const ground = new THREE.Mesh(groundGeo, groundMat);
-ground.rotation.x = -Math.PI/2;
-ground.receiveShadow = true;
-scene.add(ground);
 
 // Luz
 const light = new THREE.DirectionalLight(0xffffff, 1);
 light.position.set(10,20,10);
 scene.add(light);
 
-// Câmera atrás do player (um pouco mais alta)
-camera.position.set(0,5,10);
-camera.lookAt(moto.position);
+// Chão
+const groundGeo = new THREE.PlaneGeometry(500,500);
+const groundMat = new THREE.MeshPhongMaterial({color:0x2c2c2c});
+const ground = new THREE.Mesh(groundGeo, groundMat);
+ground.rotation.x = -Math.PI/2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// CARRO PNG (base64)
+const carTexture = new THREE.TextureLoader().load(
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAA...'
+);
+const carMat = new THREE.MeshBasicMaterial({map: carTexture, transparent:true});
+const carGeo = new THREE.BoxGeometry(2,1,4);
+const car = new THREE.Mesh(carGeo, carMat);
+car.position.y = 0.5;
+scene.add(car);
+
+// Controles
+let keys = {};
+document.addEventListener("keydown", e=>keys[e.key.toLowerCase()]=true);
+document.addEventListener("keyup", e=>keys[e.key.toLowerCase()]=false);
+
+// Loop
+function animate(){
+    requestAnimationFrame(animate);
+
+    let speed = keys["shift"] ? 0.3 : 0.15;
+    if(keys["w"]) car.position.z -= speed;
+    if(keys["s"]) car.position.z += speed;
+    if(keys["a"]) car.position.x -= speed;
+    if(keys["d"]) car.position.x += speed;
+
+    // Câmera atrás do carro
+    camera.position.x = car.position.x;
+    camera.position.y = car.position.y + 5;
+    camera.position.z = car.position.z + 10;
+    camera.lookAt(car.position);
+
+    renderer.render(scene, camera);
+}
+animate();
+
+// Resize
+window.addEventListener("resize", ()=>{
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+</body>
+</html>
