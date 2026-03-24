@@ -1,223 +1,40 @@
-<!DOCTYPE html>
+// Supondo Three.js já importado
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({canvas: document.getElementById("game")});
+renderer.setSize(window.innerWidth, window.innerHeight);
 
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<title>Mini GTA FULL</title>
-<style>
-body { margin:0; overflow:hidden; background:#111; font-family:Arial; }
-canvas { display:block; }
+// Player
+const geometry = new THREE.BoxGeometry(1,1,2);
+const material = new THREE.MeshBasicMaterial({color: 0xffffff});
+const player = new THREE.Mesh(geometry, material);
+scene.add(player);
 
-#btnCar {
-position: fixed;
-bottom: 20px;
-right: 20px;
-padding: 15px 25px;
-background: gold;
-border: none;
-border-radius: 10px;
-cursor: pointer;
-} </style>
+// Chão
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(100,100), new THREE.MeshBasicMaterial({color:0x333333}));
+ground.rotation.x = -Math.PI/2;
+scene.add(ground);
 
-</head>
-<body>
+// Câmera atrás
+camera.position.set(0, 5, -10);
+camera.lookAt(player.position);
 
-<canvas id="game"></canvas> <button id="btnCar">Entrar no carro</button>
+// Loop
+function animate(){
+    requestAnimationFrame(animate);
+    
+    // Movimento player (WASD)
+    if(keys["w"]) player.position.z -= 0.1;
+    if(keys["s"]) player.position.z += 0.1;
+    if(keys["a"]) player.position.x -= 0.1;
+    if(keys["d"]) player.position.x += 0.1;
 
-<script>
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
+    // Atualizar câmera atrás
+    camera.position.x = player.position.x;
+    camera.position.z = player.position.z - 10;
+    camera.position.y = player.position.y + 5;
+    camera.lookAt(player.position);
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-let keys = {};
-let bullets = [];
-
-// PLAYER
-let player = {
-  x: 500,
-  y: 500,
-  size: 20,
-  speed: 2,
-  run: 4,
-  inCar: false,
-  life: 100
-};
-
-// CARRO
-let car = {
-  x: 600,
-  y: 500,
-  w: 60,
-  h: 30,
-  speed: 6
-};
-
-// NPCs
-let npcs = [];
-for(let i=0;i<8;i++){
-  npcs.push({
-    x: Math.random()*2000,
-    y: Math.random()*2000,
-    dir: Math.random()*6
-  });
+    renderer.render(scene, camera);
 }
-
-// POLÍCIA
-let police = { x: 800, y: 800 };
-
-// CONTROLES
-document.addEventListener("keydown", e => {
-  keys[e.key.toLowerCase()] = true;
-  if(e.key.toLowerCase() === "e") toggleCar();
-});
-document.addEventListener("keyup", e => {
-  keys[e.key.toLowerCase()] = false;
-});
-
-// BOTÃO
-document.getElementById("btnCar").onclick = toggleCar;
-
-// TIRO
-canvas.addEventListener("click", () => {
-  bullets.push({
-    x: player.x,
-    y: player.y,
-    dx: (Math.random()-0.5)*10,
-    dy: (Math.random()-0.5)*10
-  });
-});
-
-function toggleCar(){
-  let dist = Math.hypot(player.x-car.x, player.y-car.y);
-  if(dist < 80 || player.inCar){
-    player.inCar = !player.inCar;
-    document.getElementById("btnCar").innerText =
-      player.inCar ? "Sair do carro" : "Entrar no carro";
-  }
-}
-
-// UPDATE
-function update(){
-  let speed = keys["shift"] ? player.run : player.speed;
-
-  if(player.inCar){
-    if(keys["w"]||keys["arrowup"]) car.y -= car.speed;
-    if(keys["s"]||keys["arrowdown"]) car.y += car.speed;
-    if(keys["a"]||keys["arrowleft"]) car.x -= car.speed;
-    if(keys["d"]||keys["arrowright"]) car.x += car.speed;
-
-    player.x = car.x;
-    player.y = car.y;
-
-  } else {
-    if(keys["w"]||keys["arrowup"]) player.y -= speed;
-    if(keys["s"]||keys["arrowdown"]) player.y += speed;
-    if(keys["a"]||keys["arrowleft"]) player.x -= speed;
-    if(keys["d"]||keys["arrowright"]) player.x += speed;
-  }
-
-  // NPCs
-  npcs.forEach(n=>{
-    n.x += Math.sin(n.dir);
-    n.y += Math.cos(n.dir);
-    if(Math.random()<0.02) n.dir = Math.random()*6;
-  });
-
-  // POLÍCIA TE SEGUE
-  let dx = player.x - police.x;
-  let dy = player.y - police.y;
-  police.x += dx * 0.01;
-  police.y += dy * 0.01;
-
-  // DANO
-  if(Math.hypot(dx,dy)<30){
-    player.life -= 0.1;
-  }
-
-  // BALAS
-  bullets.forEach(b=>{
-    b.x += b.dx;
-    b.y += b.dy;
-  });
-}
-
-// CAMERA
-function camera(){
-  return {
-    x: player.x - canvas.width/2,
-    y: player.y - canvas.height/2
-  };
-}
-
-// DRAW
-function draw(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  let cam = camera();
-  ctx.save();
-  ctx.translate(-cam.x, -cam.y);
-
-  // MAPA
-  ctx.fillStyle="#2c2c2c";
-  ctx.fillRect(0,0,2000,2000);
-
-  // RUAS
-  ctx.fillStyle="#555";
-  for(let i=0;i<2000;i+=200){
-    ctx.fillRect(i,0,50,2000);
-    ctx.fillRect(0,i,2000,50);
-  }
-
-  // NPCs
-  ctx.fillStyle="yellow";
-  npcs.forEach(n=>{
-    ctx.fillRect(n.x,n.y,15,15);
-  });
-
-  // POLÍCIA
-  ctx.fillStyle="blue";
-  ctx.fillRect(police.x, police.y, 20,20);
-
-  // CARRO
-  ctx.fillStyle="red";
-  ctx.fillRect(car.x, car.y, car.w, car.h);
-
-  // PLAYER
-  if(!player.inCar){
-    ctx.fillStyle="white";
-    ctx.fillRect(player.x, player.y, player.size, player.size);
-  }
-
-  // BALAS
-  ctx.fillStyle="orange";
-  bullets.forEach(b=>{
-    ctx.fillRect(b.x,b.y,5,5);
-  });
-
-  ctx.restore();
-
-  // HUD
-  ctx.fillStyle="white";
-  ctx.fillText("Vida: "+Math.floor(player.life), 20,30);
-  ctx.fillText("WASD | SHIFT correr | Mouse atira | E carro", 20,50);
-}
-
-// LOOP
-function loop(){
-  update();
-  draw();
-  requestAnimationFrame(loop);
-}
-loop();
-
-// RESIZE
-window.addEventListener("resize", ()=>{
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-});
-</script>
-
-</body>
-</html>
+animate();
