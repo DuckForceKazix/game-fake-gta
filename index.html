@@ -1,6 +1,96 @@
-// Banco falso (cubo grande)
-const bankGeo = new THREE.BoxGeometry(10,6,8);
-const bankMat = new THREE.MeshPhongMaterial({color:0xffff00}); // amarelo para destacar
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Mini GTA RP 3D</title>
+<style>
+  body { margin:0; overflow:hidden; background:#87ceeb; }
+  canvas { display:block; }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.162.0/build/three.min.js"></script>
+<script>
+// Cena e render
+const canvas = document.getElementById("game");
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87ceeb);
+
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({canvas});
+renderer.setSize(window.innerWidth, window.innerHeight);
+
+// Luz
+const light = new THREE.DirectionalLight(0xffffff,1);
+light.position.set(20,50,20);
+scene.add(light);
+
+// Chão (rua e calçada)
+const groundMat = new THREE.MeshPhongMaterial({color:0x444444});
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(500,500), groundMat);
+ground.rotation.x = -Math.PI/2;
+scene.add(ground);
+
+// Prédios simples
+const buildingGeo = new THREE.BoxGeometry(10,20,10);
+const buildingMat = new THREE.MeshPhongMaterial({color:0x888888});
+for(let i=-100;i<=100;i+=25){
+  for(let j=-100;j<=100;j+=25){
+    if(Math.random() < 0.5){
+      const building = new THREE.Mesh(buildingGeo, buildingMat);
+      building.position.set(i,10,j); // metade da altura
+      scene.add(building);
+    }
+  }
+}
+
+// Banco falso
+const bankGeo = new THREE.BoxGeometry(15,10,12);
+const bankMat = new THREE.MeshPhongMaterial({color:0xffff00}); // amarelo para destaque
 const bank = new THREE.Mesh(bankGeo, bankMat);
-bank.position.set(20, 3, -30); // posição no mapa
+bank.position.set(30,5,-40);
 scene.add(bank);
+
+// Carro controlável (cubo vermelho)
+const carGeo = new THREE.BoxGeometry(2,1,4);
+const carMat = new THREE.MeshPhongMaterial({color:0xff0000});
+const car = new THREE.Mesh(carGeo, carMat);
+car.position.y = 0.5;
+scene.add(car);
+
+// Controles
+let keys = {};
+document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
+document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+
+// Loop
+function animate(){
+    requestAnimationFrame(animate);
+
+    let speed = keys["shift"] ? 0.3 : 0.15;
+    if(keys["w"]) car.position.z -= speed;
+    if(keys["s"]) car.position.z += speed;
+    if(keys["a"]) car.position.x -= speed;
+    if(keys["d"]) car.position.x += speed;
+
+    // Câmera atrás do carro
+    camera.position.x = car.position.x;
+    camera.position.y = car.position.y + 5;
+    camera.position.z = car.position.z + 10;
+    camera.lookAt(car.position);
+
+    renderer.render(scene,camera);
+}
+animate();
+
+// Resize
+window.addEventListener("resize", ()=>{
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+</body>
+</html>
