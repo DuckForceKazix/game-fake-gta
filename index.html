@@ -2,50 +2,52 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Casa de Apostas Falsa</title>
+<title>Casa de Apostas Tigrinho Fake</title>
 <style>
   body { 
     font-family: Arial, sans-serif; 
-    display: flex; 
-    justify-content: center; 
-    align-items: center; 
-    height: 100vh; 
-    background: #222; 
-    color: white; 
+    display:flex; 
+    justify-content:center; 
+    align-items:center; 
+    height:100vh; 
+    background: linear-gradient(to right,#ffcc00,#ff6600); 
+    margin:0;
   }
-  #betContainer {
-    background: #333; 
-    padding: 20px; 
-    border-radius: 10px;
-    text-align: center;
-    width: 300px;
+  #tigrinho {
+    background:#fff; 
+    padding:20px; 
+    border-radius:15px; 
+    width:320px; 
+    text-align:center; 
+    box-shadow:0 0 20px rgba(0,0,0,0.5);
   }
-  button {
-    margin: 5px;
-    padding: 10px 15px;
-    cursor: pointer;
-    border: none;
-    border-radius: 5px;
-    background: gold;
-    font-weight: bold;
+  #tigrinho h2 { color:#ff6600; margin-bottom:10px; }
+  #tigrinho p { font-size:18px; margin:5px 0; }
+  input[type=number] { width:80px; padding:5px; margin:10px 0; text-align:center; }
+  button { 
+    padding:10px 15px; 
+    margin:5px; 
+    border:none; 
+    border-radius:8px; 
+    cursor:pointer; 
+    font-weight:bold; 
+    background:#ffcc00; 
+    color:#333; 
+    transition: 0.2s;
   }
-  input[type=number] {
-    width: 80px;
-    padding: 5px;
-    margin-top: 10px;
-    text-align: center;
-  }
+  button:hover { background:#ff9900; color:white; }
+  #result { margin-top:10px; font-weight:bold; font-size:16px; color:#ff3300; min-height:20px;}
 </style>
 </head>
 <body>
 
-<div id="betContainer">
-  <h2>Casa de Apostas Falsa</h2>
+<div id="tigrinho">
+  <h2>🎰 Casa de Apostas Tigrinho 🎰</h2>
   <p>Saldo: $<span id="balance">1000</span></p>
   <input type="number" id="betAmount" placeholder="Valor da aposta">
   <div>
-    <button onclick="bet('win')">Apostar e Tentar Sorte</button>
-    <button onclick="resetBet()">Resetar Saldo</button>
+    <button onclick="playBet()">Apostar!</button>
+    <button onclick="resetBalance()">Resetar Saldo</button>
   </div>
   <p id="result"></p>
 </div>
@@ -53,34 +55,40 @@
 <script>
 let balance = 1000;
 
-function bet() {
-  const amountInput = document.getElementById("betAmount");
-  const amount = parseInt(amountInput.value);
+function playBet(){
+  const betInput = document.getElementById("betAmount");
+  const amount = parseInt(betInput.value);
 
-  if(isNaN(amount) || amount <= 0) {
-    alert("Digite um valor válido para apostar!");
+  if(!amount || amount <= 0){
+    alert("Digite um valor válido!");
     return;
   }
-  if(amount > balance) {
+  if(amount > balance){
     alert("Saldo insuficiente!");
     return;
   }
 
-  // Simula resultado aleatório
-  const win = Math.random() < 0.5; // 50% chance de ganhar
-  if(win){
-    balance += amount;
-    document.getElementById("result").innerText = "Você ganhou $" + amount + "!";
-  } else {
+  // Simula resultado estilo Tigrinho com "sorteio"
+  const random = Math.random();
+  let resultText = "";
+  if(random < 0.45){
     balance -= amount;
-    document.getElementById("result").innerText = "Você perdeu $" + amount + "!";
+    resultText = `😢 Você perdeu $${amount}!`;
+  } else if(random < 0.9){
+    balance += amount;
+    resultText = `🎉 Você ganhou $${amount}!`;
+  } else {
+    const bonus = amount * 2;
+    balance += bonus;
+    resultText = `💎 Jackpot! Você ganhou $${bonus}!`;
   }
 
   document.getElementById("balance").innerText = balance;
-  amountInput.value = '';
+  document.getElementById("result").innerText = resultText;
+  betInput.value = '';
 }
 
-function resetBet(){
+function resetBalance(){
   balance = 1000;
   document.getElementById("balance").innerText = balance;
   document.getElementById("result").innerText = '';
