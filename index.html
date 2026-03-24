@@ -2,14 +2,32 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Mini GTA RP 3D</title>
+<title>Mini GTA RP 3D com Banco Falso</title>
 <style>
   body { margin:0; overflow:hidden; background:#87ceeb; }
   canvas { display:block; }
+  #bankUI {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    display: none;
+    font-family: Arial, sans-serif;
+  }
+  #bankUI button { margin-top: 10px; padding: 5px 10px; }
 </style>
 </head>
 <body>
+
 <canvas id="game"></canvas>
+<div id="bankUI">
+  <h2>Banco Falso</h2>
+  <p>Saldo: $1000</p>
+  <button onclick="closeBank()">Fechar</button>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.162.0/build/three.min.js"></script>
 <script>
@@ -27,36 +45,20 @@ const light = new THREE.DirectionalLight(0xffffff,1);
 light.position.set(20,50,20);
 scene.add(light);
 
-// Chão (rua e calçada)
-const groundMat = new THREE.MeshPhongMaterial({color:0x444444});
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(500,500), groundMat);
+// Chão
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(500,500), new THREE.MeshPhongMaterial({color:0x444444}));
 ground.rotation.x = -Math.PI/2;
 scene.add(ground);
 
-// Prédios simples
-const buildingGeo = new THREE.BoxGeometry(10,20,10);
-const buildingMat = new THREE.MeshPhongMaterial({color:0x888888});
-for(let i=-100;i<=100;i+=25){
-  for(let j=-100;j<=100;j+=25){
-    if(Math.random() < 0.5){
-      const building = new THREE.Mesh(buildingGeo, buildingMat);
-      building.position.set(i,10,j); // metade da altura
-      scene.add(building);
-    }
-  }
-}
-
-// Banco falso
+// Banco falso (amarelo)
 const bankGeo = new THREE.BoxGeometry(15,10,12);
-const bankMat = new THREE.MeshPhongMaterial({color:0xffff00}); // amarelo para destaque
+const bankMat = new THREE.MeshPhongMaterial({color:0xffff00});
 const bank = new THREE.Mesh(bankGeo, bankMat);
 bank.position.set(30,5,-40);
 scene.add(bank);
 
-// Carro controlável (cubo vermelho)
-const carGeo = new THREE.BoxGeometry(2,1,4);
-const carMat = new THREE.MeshPhongMaterial({color:0xff0000});
-const car = new THREE.Mesh(carGeo, carMat);
+// Carro
+const car = new THREE.Mesh(new THREE.BoxGeometry(2,1,4), new THREE.MeshPhongMaterial({color:0xff0000}));
 car.position.y = 0.5;
 scene.add(car);
 
@@ -65,21 +67,34 @@ let keys = {};
 document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
 document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
+// Banco falso UI
+const bankUI = document.getElementById("bankUI");
+function closeBank() { bankUI.style.display = "none"; }
+
 // Loop
 function animate(){
     requestAnimationFrame(animate);
 
+    // Movimento
     let speed = keys["shift"] ? 0.3 : 0.15;
     if(keys["w"]) car.position.z -= speed;
     if(keys["s"]) car.position.z += speed;
     if(keys["a"]) car.position.x -= speed;
-    if(keys["d"]) car.position.x += speed;
+    if(keys["d"]) car.position.x -= speed;
 
-    // Câmera atrás do carro
+    // Câmera atrás
     camera.position.x = car.position.x;
     camera.position.y = car.position.y + 5;
     camera.position.z = car.position.z + 10;
     camera.lookAt(car.position);
+
+    // Checar proximidade com banco
+    const dx = car.position.x - bank.position.x;
+    const dz = car.position.z - bank.position.z;
+    const dist = Math.sqrt(dx*dx + dz*dz);
+
+    // Pressione E para abrir banco falso
+    if(dist < 10 && keys["e"]) bankUI.style.display = "block";
 
     renderer.render(scene,camera);
 }
